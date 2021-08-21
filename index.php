@@ -17,7 +17,8 @@ $database->query('SELECT DISTINCT `server_ip` FROM `'.DB_TABLE_PA.'` '. $hide_se
 
 $key = FileSystemCache::generateCacheKey(sha1(serialize(array($database->stmt(), $db))), 'SQL');
 $servers = FileSystemCache::retrieve($key);
-if($servers === false) {
+if ($servers === false)
+{
 	$servers = $database->resultset();
 	FileSystemCache::store($key, $servers, 100000); #300k sec = 3.4 days
 }
@@ -152,9 +153,6 @@ $force_recache = "?t2";  # change to some other random string after modding js f
 						</li>
 						<li class="menu">
 							<a href="#/stats/connections"><i class="fa fa-chain fa-fw"></i> Connections</a>
-						</li>
-						<li class="menu">
-							<a href="#/stats/players"><i class="fa fa-group fa-fw"></i> Players</a>
 						</li>
 						<li class="menu">
 							<a href="#/stats/staff"><i class="fa fa-shield fa-fw"></i> Staff</a>

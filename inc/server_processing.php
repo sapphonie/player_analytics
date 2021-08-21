@@ -30,10 +30,12 @@ $records = 0;
 $database->query('SELECT COUNT(*) as count FROM `'.DB_TABLE_PA.'`');
 $key = FileSystemCache::generateCacheKey(sha1(serialize(array($database->stmt(), $db))), 'SQL');
 $records = FileSystemCache::retrieve($key);
-if($records === false) {
+if($records === false)
+{
 	$records = $database->single();
 	FileSystemCache::store($key, $records, 2000);
 }
+
 if(!empty($records)) {
 	$records = $records['count'];
 }
@@ -57,6 +59,10 @@ if (isset($_GET['type']) && $_GET['type'] == 'getconnections') {
 		array(
 			'db'        => 'auth',
 			'dt'        => 'auth'
+		),
+		array(
+			'db'        => 'ip',
+			'dt'        => 'ip'
 		),
 		array(
 			'db'        => 'connect_time',
@@ -84,6 +90,14 @@ if (isset($_GET['type']) && $_GET['type'] == 'getconnections') {
 			'dt'        => 'country'
 		),
 		array(
+			'db'        => 'region',
+			'dt'        => 'region'
+		),
+		array(
+			'db'        => 'city',
+			'dt'        => 'city'
+		),
+		array(
 			'db'        => 'premium',
 			'dt'        => 'premium'
 		),
@@ -109,7 +123,7 @@ if (isset($_GET['type']) && $_GET['type'] == 'getconnections') {
 	);
 }
 
-if (isset($_GET['type']) && ($_GET['type'] == 'getplayers' || $_GET['type'] == 'getstaff')) {
+if (isset($_GET['type']) && ($_GET['type'] == 'getstaff')) {
 
 	$primaryKey = 'id';
 	#print_r($_GET); die;
@@ -128,6 +142,10 @@ if (isset($_GET['type']) && ($_GET['type'] == 'getplayers' || $_GET['type'] == '
 		array(
 			'db'        => 'auth',
 			'dt'        => 'auth'
+		),
+		array(
+			'db'        => 'ip',
+			'dt'        => 'ip'
 		),
 		array(
 			'db'        => 'SUM(duration)',
@@ -232,6 +250,10 @@ if (isset($_GET['type']) && $_GET['type'] == 'getcountryinfo') {
 			'dt'        => 'auth'
 		),
 		array(
+			'db'        => 'ip',
+			'dt'        => 'ip'
+		),
+		array(
 			'db'        => 'duration',
 			'dt'        => 'duration',
 			'formatter' => function( $d, $row ) {
@@ -285,6 +307,11 @@ if (isset($_GET['type']) && $_GET['type'] == 'c') { // connections for single se
 			'db'        => 'auth',
 			'dt'        => 'auth'
 		),
+		array(
+			'db'        => 'ip',
+			'dt'        => 'ip'
+		),
+
 		array(
 			'db'        => 'connect_time',
 			'dt'        => 'connect_time',
@@ -356,6 +383,10 @@ if (isset($_GET['type']) && $_GET['type'] == 'u') { // Unique Players for single
 		array(
 			'db'        => 'auth',
 			'dt'        => 'auth'
+		),
+		array(
+			'db'        => 'ip',
+			'dt'        => 'ip'
 		),
 		array(
 			'db'        => 'SUM(duration)',

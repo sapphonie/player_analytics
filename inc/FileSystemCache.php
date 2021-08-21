@@ -15,7 +15,7 @@ class FileSystemCache {
 	 * @var string
 	 */
 	public static $cacheDir = 'cache';
-	
+
 	/**
 	 * Generates a cache key to use with store, retrieve, getAndModify, and invalidate
 	 * @param mixed $key_data Unique data that identifies the key.  Can be a string, array, number, or object.
@@ -33,20 +33,20 @@ class FileSystemCache {
 	 * @param int $ttl The number of seconds until the cache expires.  (optional)
 	 * @return boolean True on success, false on failure
 	 */
-	public static function store(FileSystemCacheKey $key, $data, $ttl=null) {	
+	public static function store(FileSystemCacheKey $key, $data, $ttl=null) {
 		$filename = $key->getFileName();
-		
+
 		$data = new FileSystemCacheValue($key,$data,$ttl);
-		
+
 		$fh = self::getFileHandle($filename,'c');
 
 		if(!$fh) return false;
-		
+
 		if(!self::putContents($fh,$data)) return false;
 
 		return true;
 	}
-	
+
 	/**
 	 * Retrieve data from cache
 	 * @param FileSystemCacheKey $key The cache key
@@ -55,27 +55,27 @@ class FileSystemCache {
 	 */
 	public static function retrieve(FileSystemCacheKey $key, $newer_than=null) {
 		$filename = $key->getFileName();
-		
+
 		if(!file_exists($filename)) return false;
-		
+
 		//if cached data is not newer than $newer_than
 		if($newer_than && filemtime($filename) < $newer_than) return false;
 
 		$fh = self::getFileHandle($filename,'r');
 		if(!$fh) return false;
-		
+
 		$data = self::getContents($fh,$key);
 		if(!$data) return false;
 
 
-		self::closeFile($fh);		
+		self::closeFile($fh);
 		return $data->value;
 	}
-	
+
 	/**
 	 * Atomically retrieve data from cache, modify it, and store it back
 	 * @param FileSystemCacheKey $key The cache key
-	 * @param Closure $callback A closure function to modify the cache value.  
+	 * @param Closure $callback A closure function to modify the cache value.
 	 * Takes the old value as an argument and returns new value.
 	 * If this function returns false, the cached value will be invalidated.
 	 * @param bool $resetTtl If set to true, the expiration date will be recalculated using the previous TTL
@@ -84,21 +84,21 @@ class FileSystemCache {
 	 */
 	public static function getAndModify(FileSystemCacheKey $key, Closure $callback, $resetTtl=false) {
 		$filename = $key->getFileName();
-		
+
 		if(!file_exists($filename)) return false;
 
 		//open a file handle
 		$fh = self::getFileHandle($filename,'c+');
 		if(!$fh) return false;
-		
+
 		//get the data
 		$data = self::getContents($fh,$key);
 		if(!$data) return false;
-		
+
 		//get new value from callback function
 		$old_value = $data->value;
 		$data->value = $callback($data->value);
-		
+
 		//if the callback function returns false
 		if($data->value === false) {
 			self::closeFile($fh);
@@ -107,13 +107,13 @@ class FileSystemCache {
 			self::invalidate($key);
 			return false;
 		}
-		
+
 		//if value didn't change
 		if(!$resetTtl && $data->value === $old_value) {
-			self::closeFile($fh);			
+			self::closeFile($fh);
 			return $data->value;
 		}
-		
+
 		//if we're resetting the ttl to now
 		if($resetTtl) {
 			$data->created = time();
@@ -126,11 +126,11 @@ class FileSystemCache {
 
 		//write contents and close the file handle
 		self::putContents($fh,$data);
-		
+
 		//return the new value after modifying
 		return $data->value;
 	}
-	
+
 	/**
 	 * Invalidate a specific cache key
 	 * @param FileSystemCacheKey $key The cache key
@@ -163,17 +163,17 @@ class FileSystemCache {
 		}
 
 		array_map("unlink", glob(self::$cacheDir.'/'.$name.'*.cache'));
-		
+
 		//if recursively invalidating
 		if($recursive) {
 			$subdirs = glob(self::$cacheDir.'/'.$name.'*',GLOB_ONLYDIR);
-			
+
 			foreach($subdirs as $dir) {
 				$dir = basename($dir);
-				
+
 				//skip all subdirectories that start with '.'
 				if($dir[0] == '.') continue;
-				
+
 				self::invalidateGroup($name.$dir,true);
 			}
 		}
@@ -204,7 +204,7 @@ class FileSystemCache {
 				return false;
 			}
 		}
-		
+
 		//get file pointer
 		$fh = fopen($filename,$mode);
 
@@ -215,7 +215,7 @@ class FileSystemCache {
 			if(!flock($fh,LOCK_EX)) {
 				self::closeFile($fh);
 				return false;
-			}	
+			}
 		}
 		else {
 			if(!flock($fh,LOCK_SH)) {
@@ -223,7 +223,7 @@ class FileSystemCache {
 				return false;
 			}
 		}
-		
+
 		return $fh;
 	}
 
@@ -263,18 +263,18 @@ class FileSystemCache {
 		//get the existing file contents
 		$contents = stream_get_contents($fh);
 		$data = @unserialize($contents);
-		
+
 		//if we can't unserialize the data or if the data is expired
 		if(!$data || !($data instanceof FileSystemCacheValue) || $data->isExpired()) {
 			//release lock
 			self::closeFile($fh);
-			
+
 			//delete the cache file so we don't try to retrieve it again
 			self::invalidate($key);
-			
+
 			return false;
 		}
-		
+
 		return $data;
 	}
 
@@ -331,7 +331,7 @@ class FileSystemCacheKey {
 		if(!is_string($key)) {
 			$key = serialize($key);
 		}
-		
+
 		//if we can't use the key directly, md5 it
 		if(preg_match('/[^a-zA-Z0-9_\-\.]/',$key)) {
 			$key = md5($key);
@@ -401,7 +401,7 @@ class FileSystemCacheValue {
 		$this->value = $value;
 		$this->ttl = $ttl;
 		$this->created = time();
-		
+
 		if($ttl) $this->expires = $this->created + $ttl;
 		else $this->expires = null;
 	}
@@ -413,7 +413,7 @@ class FileSystemCacheValue {
 	public function isExpired() {
 		//value doesn't expire
 		if(!$this->expires) return false;
-		
+
 		//if it is after the expire time
 		return time() > $this->expires;
 	}
